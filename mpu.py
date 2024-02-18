@@ -22,6 +22,7 @@ MPU9250_GYRO_ZOUT_H = 0x47
 who_am_i = bus.read_byte_data(mpu9250_address, MPU9250_WHO_AM_I)
 print(f"MPU9250 WHO_AM_I: {hex(who_am_i)}")
 
+
 # Function to read sensor data
 def read_sensor_data(register):
     high = bus.read_byte_data(mpu9250_address, register)
@@ -32,6 +33,7 @@ def read_sensor_data(register):
         value -= 65536
 
     return value
+
 
 try:
     while True:
