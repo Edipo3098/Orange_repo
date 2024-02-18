@@ -6,6 +6,7 @@ i2c_bus = 0  # On Orange Pi, I2C-0 is commonly used
 mpu9250_address = 0x68  # MPU9250 default I2C address
 
 # Create an smbus object
+i2c_bus = 1  # Assuming you want to use /dev/i2c-1
 bus = smbus.SMBus(i2c_bus)
 
 # MPU9250 register addresses
