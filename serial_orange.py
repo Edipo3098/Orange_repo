@@ -1,16 +1,15 @@
 import serial
 import time
 
-# Define serial port and baud rate
-serial_port = "/dev/ttyS0"
+serial_port = '/dev/ttyS5'
 baud_rate = 115200
 
-# Create a serial object
 ser = serial.Serial(serial_port, baud_rate, timeout=1)
+
 
 try:
     # Open the serial port
-    ser.open()
+   
 
     while True:
         try:
@@ -19,7 +18,7 @@ try:
             ser.write(data_to_send.encode())  # Encode string as bytes before sending
 
             # Wait for a moment
-            time.sleep(2)
+            time.sleep(5)
 
             # Read response from the serial connection
             received_data = ser.readline().decode().strip()
