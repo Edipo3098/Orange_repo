@@ -1,34 +1,35 @@
 import serial
 import time
 
-serial_port = '/dev/ttyS0'
+# Define serial port and baud rate
+serial_port = "/dev/ttyS0"
 baud_rate = 115200
 
+# Create a serial object
 ser = serial.Serial(serial_port, baud_rate, timeout=1)
 
 try:
-    print("Serial port opened successfully")
+    # Open the serial port
+    ser.open()
 
     while True:
         try:
-            #time.sleep(10)
-            if ser.in_waiting > 0:
-                data = ser.readline().rstrip(b'\n').decode('utf-8')
-                #raw_data=ser.read(1)
-                print("Arduino says:", data)
-            #else:
-                #print("Estoy esperando datos")
-        except serial.SerialException as se:
-            print(f"SerialException: {se}")
-            #time.sleep(1)
+            # Send data over the serial connection
+            data_to_send = "Hello, Arduino!"
+            ser.write(data_to_send.encode())  # Encode string as bytes before sending
+
+            # Wait for a moment
+            time.sleep(2)
+
+            # Read response from the serial connection
+            received_data = ser.readline().decode().strip()
+            print("Received:", received_data)
+
         except KeyboardInterrupt:
-            print("\nExiting the script.")
-            time.sleep(1)
-except serial.SerialException as se:
-    print(f"SerialException: {se}")
-    time.sleep(1)
-except KeyboardInterrupt:
-    print("\nExiting the script.")
-    time.sleep(1)
+            # If Ctrl+C is pressed, break out of the loop
+            print("Keyboard interrupt detected. Exiting...")
+            break
+
 finally:
+    # Close the serial port, even if an exception occurs
     ser.close()
