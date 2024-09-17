@@ -2,13 +2,17 @@
 import smbus
 import time
 
-# Define the I2C bus and MPU9250 and HMC5883L addresses
-i2c_bus = 1  # Assuming you want to use /dev/i2c-1
+# Define the I2C bus numbers for MPU9250 and HMC5883L
+mpu9250_bus = 1  # /dev/i2c-1
+hmc5883l_bus = 2  # /dev/i2c-2
+
+# Define the I2C addresses for MPU9250 and HMC5883L
 mpu9250_address = 0x68  # MPU9250 default I2C address
 hmc5883l_address = 0x1E  # HMC5883L I2C address
 
-# Create an smbus object
-bus = smbus.SMBus(i2c_bus)
+# Create SMBus objects for both buses
+mpu9250_bus = smbus.SMBus(mpu9250_bus)  # I2C bus for MPU9250
+hmc5883l_bus = smbus.SMBus(hmc5883l_bus)  # I2C bus for HMC5883L
 
 # MPU9250 register addresses
 MPU9250_WHO_AM_I = 0x75
@@ -35,20 +39,20 @@ GYRO_SENSITIVITY = 131.0  # LSB/dps for +/- 250 dps range
 MAG_SENSITIVITY = 1090.0  # LSB/gauss (assumed for HMC5883L)
 
 # Check the WHO_AM_I register to verify communication with MPU9250
-who_am_i = bus.read_byte_data(mpu9250_address, MPU9250_WHO_AM_I)
+who_am_i = mpu9250_bus.read_byte_data(mpu9250_address, MPU9250_WHO_AM_I)
 print(f"MPU9250 WHO_AM_I: {hex(who_am_i)}")
 
 # Initialize HMC5883L (configure registers)
 def initialize_hmc5883l():
     # Write to configuration register A
-    bus.write_byte_data(hmc5883l_address, HMC5883L_CONFIG_REG_A, 0x70)  # 8-average, 15 Hz default, normal measurement
+    hmc5883l_bus.write_byte_data(hmc5883l_address, HMC5883L_CONFIG_REG_A, 0x70)  # 8-average, 15 Hz default, normal measurement
     # Write to configuration register B (Gain)
-    bus.write_byte_data(hmc5883l_address, HMC5883L_CONFIG_REG_B, 0x20)  # Gain = 1.3 Ga
+    hmc5883l_bus.write_byte_data(hmc5883l_address, HMC5883L_CONFIG_REG_B, 0x20)  # Gain = 1.3 Ga
     # Write to mode register (Continuous measurement mode)
-    bus.write_byte_data(hmc5883l_address, HMC5883L_MODE_REG, 0x00)  # Continuous measurement mode
+    hmc5883l_bus.write_byte_data(hmc5883l_address, HMC5883L_MODE_REG, 0x00)  # Continuous measurement mode
 
-# Read sensor data from MPU9250 or HMC5883L
-def read_sensor_data(register, calibration_params, sensitivity):
+# Read sensor data from MPU9250
+def read_sensor_data(bus, register, calibration_params, sensitivity):
     high = bus.read_byte_data(mpu9250_address, register)
     low = bus.read_byte_data(mpu9250_address, register + 1)
     value = (high << 8) | low
@@ -63,12 +67,12 @@ def read_sensor_data(register, calibration_params, sensitivity):
 
 # Read magnetometer data from HMC5883L
 def read_magnetometer_data():
-    mag_x_high = bus.read_byte_data(hmc5883l_address, HMC5883L_DATA_XOUT_H)
-    mag_x_low = bus.read_byte_data(hmc5883l_address, HMC5883L_DATA_XOUT_H + 1)
-    mag_z_high = bus.read_byte_data(hmc5883l_address, HMC5883L_DATA_XOUT_H + 2)
-    mag_z_low = bus.read_byte_data(hmc5883l_address, HMC5883L_DATA_XOUT_H + 3)
-    mag_y_high = bus.read_byte_data(hmc5883l_address, HMC5883L_DATA_XOUT_H + 4)
-    mag_y_low = bus.read_byte_data(hmc5883l_address, HMC5883L_DATA_XOUT_H + 5)
+    mag_x_high = hmc5883l_bus.read_byte_data(hmc5883l_address, HMC5883L_DATA_XOUT_H)
+    mag_x_low = hmc5883l_bus.read_byte_data(hmc5883l_address, HMC5883L_DATA_XOUT_H + 1)
+    mag_z_high = hmc5883l_bus.read_byte_data(hmc5883l_address, HMC5883L_DATA_XOUT_H + 2)
+    mag_z_low = hmc5883l_bus.read_byte_data(hmc5883l_address, HMC5883L_DATA_XOUT_H + 3)
+    mag_y_high = hmc5883l_bus.read_byte_data(hmc5883l_address, HMC5883L_DATA_XOUT_H + 4)
+    mag_y_low = hmc5883l_bus.read_byte_data(hmc5883l_address, HMC5883L_DATA_XOUT_H + 5)
 
     mag_x = (mag_x_high << 8) | mag_x_low
     mag_y = (mag_y_high << 8) | mag_y_low
@@ -93,17 +97,17 @@ try:
     initialize_hmc5883l()  # Initialize the magnetometer (HMC5883L)
 
     while True:
-        # Read accelerometer data
-        accel_x = read_sensor_data(MPU9250_ACCEL_XOUT_H, accel_calibration, ACCEL_SENSITIVITY)
-        accel_y = read_sensor_data(MPU9250_ACCEL_YOUT_H, accel_calibration, ACCEL_SENSITIVITY)
-        accel_z = read_sensor_data(MPU9250_ACCEL_ZOUT_H, accel_calibration, ACCEL_SENSITIVITY)
+        # Read accelerometer data from MPU9250 (on I2C bus 1)
+        accel_x = read_sensor_data(mpu9250_bus, MPU9250_ACCEL_XOUT_H, accel_calibration, ACCEL_SENSITIVITY)
+        accel_y = read_sensor_data(mpu9250_bus, MPU9250_ACCEL_YOUT_H, accel_calibration, ACCEL_SENSITIVITY)
+        accel_z = read_sensor_data(mpu9250_bus, MPU9250_ACCEL_ZOUT_H, accel_calibration, ACCEL_SENSITIVITY)
 
-        # Read gyroscope data
-        gyro_x = read_sensor_data(MPU9250_GYRO_XOUT_H, gyro_calibration, GYRO_SENSITIVITY)
-        gyro_y = read_sensor_data(MPU9250_GYRO_YOUT_H, gyro_calibration, GYRO_SENSITIVITY)
-        gyro_z = read_sensor_data(MPU9250_GYRO_ZOUT_H, gyro_calibration, GYRO_SENSITIVITY)
+        # Read gyroscope data from MPU9250 (on I2C bus 1)
+        gyro_x = read_sensor_data(mpu9250_bus, MPU9250_GYRO_XOUT_H, gyro_calibration, GYRO_SENSITIVITY)
+        gyro_y = read_sensor_data(mpu9250_bus, MPU9250_GYRO_YOUT_H, gyro_calibration, GYRO_SENSITIVITY)
+        gyro_z = read_sensor_data(mpu9250_bus, MPU9250_GYRO_ZOUT_H, gyro_calibration, GYRO_SENSITIVITY)
 
-        # Read magnetometer data
+        # Read magnetometer data from HMC5883L (on I2C bus 2)
         mag_x, mag_y, mag_z = read_magnetometer_data()
 
         # Print MPU9250 sensor data (acceleration and gyro)
@@ -119,5 +123,6 @@ try:
 except KeyboardInterrupt:
     print("\nExiting the script.")
 finally:
-    # Close the I2C bus
-    bus.close()
+    # Close the I2C buses
+    mpu9250_bus.close()
+    hmc5883l_bus.close()
