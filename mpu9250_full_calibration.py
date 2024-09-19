@@ -306,8 +306,8 @@ if __name__ == '__main__':
             cal_offsets[3:6] = gyro_offsets 
             mpu_offsets = accel_cal() # calibrate accel offsets 
             cal_offsets[0:3] = mpu_offsets
-            ak_offsets = mag_cal() # calibrate mag offsets 
-            cal_offsets[6:] = ak_offsets
+            #ak_offsets = mag_cal() # calibrate mag offsets 
+            cal_offsets[6:] = mpu_offsets
             # save calibration coefficients to file
             with open(cal_filename,'w',newline='') as csvfile:
                 writer = csv.writer(csvfile,delimiter=',')
